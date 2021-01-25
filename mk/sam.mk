@@ -1,11 +1,11 @@
 ifeq (sam,$(BUILD_SPEC))
 
-include mk/$(SAM_VARIANT).mk
+include $(MK_DIR)/$(SAM_VARIANT).mk
 
 MAP_FILE := $(OBJ_DIR)/$(TARGET).map
 TARGET := $(TARGET).elf
 
-include mk/arm_gcc.mk
+include $(MK_DIR)/arm_gcc.mk
 
 # Target CPU architecture: cortex-m3, cortex-m4
 ARCH ?= cortex-m7
@@ -19,66 +19,70 @@ FLAGS += -mcpu=$(ARCH) -mthumb
 # set architecture to find freertos port-specific files
 FREERTOS_PORT_DIR := ARM_CM7/r0p1
 
+ASF := $(UCPLATFORM)/sam/asf
+
 # ASF has lots of #include statements without any path component, requiring
 # a huge set of include directories.
 INCLUDE_DIRS += \
-       -Isam/asf/                                        \
-       -Isam/asf/common/                                 \
-       -Isam/asf/common/boards/                          \
-       -Isam/asf/sam/boards/                             \
-       -Isam/asf/sam/utils/                              \
-       -Isam/asf/common/utils/                           \
-       -Isam/asf/sam/utils/preprocessor/                 \
-       -Isam/asf/sam/utils/header_files/                 \
-       -Isam/asf/sam/utils/cmsis/$(SAM_VARIANT)/include/          \
-       -Isam/asf/sam/utils/cmsis/$(SAM_VARIANT)/source/templates/ \
-       -Isam/asf/thirdparty/CMSIS/Include/               \
-       -Isam/asf/sam/utils/fpu/                          \
-       -Isam/asf/common/services/clock/                  \
-       -Isam/asf/common/services/serial/                 \
-       -Isam/asf/sam/drivers/efc/                        \
-       -Isam/asf/sam/drivers/mcan/                       \
-       -Isam/asf/sam/drivers/mpu/                        \
-       -Isam/asf/sam/drivers/pio/                        \
-       -Isam/asf/sam/drivers/pmc/                        \
-       -Isam/asf/sam/drivers/rtt/                        \
-       -Isam/asf/sam/drivers/spi/                        \
-       -Isam/asf/sam/drivers/twihs/                      \
-       -Isam/asf/sam/drivers/uart/                       \
-       -Isam/asf/sam/drivers/usart/                      \
-       -Isam/asf/common/services/ioport/                 \
-       -Isam/asf/common/services/sleepmgr/               \
-       -Isam/asf/common/services/usb/udc/                \
-
-VPATH += sam/asf
+       -I$(ASF)/                                        \
+       -I$(ASF)/common/                                 \
+       -I$(ASF)/common/boards/                          \
+       -I$(ASF)/sam/boards/                             \
+       -I$(ASF)/sam/utils/                              \
+       -I$(ASF)/common/utils/                           \
+       -I$(ASF)/sam/utils/preprocessor/                 \
+       -I$(ASF)/sam/utils/header_files/                 \
+       -I$(ASF)/sam/utils/cmsis/$(SAM_VARIANT)/include/          \
+       -I$(ASF)/sam/utils/cmsis/$(SAM_VARIANT)/source/templates/ \
+       -I$(ASF)/thirdparty/CMSIS/Include/               \
+       -I$(ASF)/sam/utils/fpu/                          \
+       -I$(ASF)/common/services/clock/                  \
+       -I$(ASF)/common/services/serial/                 \
+       -I$(ASF)/sam/drivers/efc/                        \
+       -I$(ASF)/sam/drivers/mcan/                       \
+       -I$(ASF)/sam/drivers/mpu/                        \
+       -I$(ASF)/sam/drivers/pio/                        \
+       -I$(ASF)/sam/drivers/pmc/                        \
+       -I$(ASF)/sam/drivers/rtt/                        \
+       -I$(ASF)/sam/drivers/spi/                        \
+       -I$(ASF)/sam/drivers/twihs/                      \
+       -I$(ASF)/sam/drivers/uart/                       \
+       -I$(ASF)/sam/drivers/usart/                      \
+       -I$(ASF)/common/services/ioport/                 \
+       -I$(ASF)/common/services/sleepmgr/               \
+       -I$(ASF)/common/services/usb/udc/                \
 
 # These source files are pretty much required for any project
 SRC += \
-       sam/utils/syscalls/gcc/syscalls.c                             \
-       common/utils/interrupt/interrupt_sam_nvic.c                   \
-       common/services/clock/$(SAM_VARIANT)/sysclk.c                  \
-       common/services/delay/sam/cycle_counter.c                     \
-       common/utils/stdio/read.c                                     \
-       common/utils/stdio/write.c                                    \
-       sam/drivers/pmc/pmc.c
+       $(ASF)/sam/utils/syscalls/gcc/syscalls.c                             \
+       $(ASF)/common/utils/interrupt/interrupt_sam_nvic.c                   \
+       $(ASF)/common/services/clock/$(SAM_VARIANT)/sysclk.c                  \
+       $(ASF)/common/services/delay/sam/cycle_counter.c                     \
+       $(ASF)/common/utils/stdio/read.c                                     \
+       $(ASF)/common/utils/stdio/write.c                                    \
+       $(ASF)/sam/drivers/pmc/pmc.c
 
 # startup code is processor specific, but SAM_VARIANT should find it
-SRC += sam/utils/cmsis/$(SAM_VARIANT)/source/templates/gcc/startup_$(SAM_VARIANT).c  \
-       sam/utils/cmsis/$(SAM_VARIANT)/source/templates/system_$(SAM_VARIANT).c
+SRC += $(ASF)/sam/utils/cmsis/$(SAM_VARIANT)/source/templates/gcc/startup_$(SAM_VARIANT).c  \
+       $(ASF)/sam/utils/cmsis/$(SAM_VARIANT)/source/templates/system_$(SAM_VARIANT).c
 
 # These source files are only needed if your project uses common peripherals.
 # Should maybe be removed from here and moved to the individual project Makefiles.
 SRC += \
-       common/services/serial/usart_serial.c              \
-       common/services/spi/sam_spi/spi_master.c           \
-       sam/drivers/uart/uart.c                            \
-       sam/drivers/usart/usart.c                          \
-       sam/drivers/mcan/mcan.c                            \
+       $(ASF)/common/services/serial/usart_serial.c              \
+       $(ASF)/common/services/spi/sam_spi/spi_master.c           \
+       $(ASF)/sam/drivers/uart/uart.c                            \
+       $(ASF)/sam/drivers/usart/usart.c                          \
+       $(ASF)/sam/drivers/mcan/mcan.c                            \
 
 # need to leave out -Wpedantic for dozens of "error: ISO C forbids conversion of function pointer to object pointer type"
-obj/sam/sam/utils/cmsis/$(SAM_VARIANT)/source/templates/gcc/startup_$(SAM_VARIANT).o : FLAGS += -Wno-pedantic
+$(OBJ_DIR)/$(ASF)/sam/utils/cmsis/$(SAM_VARIANT)/source/templates/gcc/startup_$(SAM_VARIANT).o : FLAGS += -Wno-pedantic
 # needed to avoid errors about unused zero-length CAN RX buffer arrays, and dead code that would access them
-obj/sam/sam/drivers/mcan/mcan.o : FLAGS += -Wno-pedantic -Wno-array-bounds
+$(OBJ_DIR)/$(ASF)/sam/drivers/mcan/mcan.o : FLAGS += -Wno-pedantic -Wno-array-bounds
+
+ifneq ($(INCLUDE_SAM_USB_SUPPORT),)
+include ucplatform/mk/sam.usb.mk
+endif
 
 FLAGS += \
        -Wno-expansion-to-defined                          \
@@ -98,7 +102,7 @@ FLAGS += -mfloat-abi=hard -mfpu=fpv5-d16
 # no effect on the link map, and they might as well be left out entirely.
 # It's unclear if the CMSIS version is better optimized, and we should make
 # more effort to try to use it.
-#LIBS +=  -Lsam/asf/thirdparty/CMSIS/Lib/GCC/ -larm_cortexM7lfdp_math -larm_cortexM7l_math
+#LIBS +=  -L$(ASF)/thirdparty/CMSIS/Lib/GCC/ -larm_cortexM7lfdp_math -larm_cortexM7l_math
 
 LDFLAGS += -Wl,-T $(LINKER_SCRIPT)
 
@@ -127,18 +131,16 @@ install: all
 	@echo "Need to flash using JTAG"
 	openocd -f $(OPEN_OCD_CONFIG) $(OPENOCD_FLASH_COMMAND)
 
+# this launches GDB, but should probably do more commands to attach to OpenOCD.
 debug.gdb: all
 	$(GDB) $(TARGET)
 	#inside gdb: target extended-remote localhost:3333
 	#inside gdb: monitor halt reset
 	#inside gdb: continue
 	#inside gdb: ctrl-c
-	# the below based on sam/asf/sam/utils/make/Makefile.sam.in
-	# the below uses jlink, not openocd and edbg!
-	#$(GDB) -x "$(DEBUG_SCRIPT)" -ex "reset" -readnow -se $(TARGET)
 
-include mk/eclipse.mk
-include mk/vscode.mk
+include $(MK_DIR)/eclipse.mk
+include $(MK_DIR)/vscode.mk
 
 #debug: debug.gdb
 #debug: debug.eclipse

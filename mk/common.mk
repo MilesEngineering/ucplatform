@@ -1,7 +1,11 @@
-include mk/include.mk
-include mk/$(BUILD_SPEC).mk
-include mk/msg.mk
-include mk/freertos.mk
+# directory of this makefile, so we can include our siblings
+MK_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+UCPLATFORM := $(shell basename $(dir $(abspath $(MK_DIR))))
+
+include $(MK_DIR)/include.mk
+include $(MK_DIR)/$(BUILD_SPEC).mk
+include $(MK_DIR)/msg.mk
+include $(MK_DIR)/freertos.mk
 
 TARGET := $(OBJ_DIR)/$(TARGET)
 
@@ -17,7 +21,7 @@ CC := ${PREFIX}gcc
 CXX := ${PREFIX}g++
 GDB := ${PREFIX}gdb
 
-INCLUDE_DIRS += -I. -I$(BUILD_SPEC)/include
+INCLUDE_DIRS += -I$(UCPLATFORM) -I$(UCPLATFORM)/$(BUILD_SPEC)/include
 
 OBJS := ${SRC:%.cpp=$(OBJ_DIR)/%.o}
 OBJS := ${OBJS:%.c=$(OBJ_DIR)/%.o}

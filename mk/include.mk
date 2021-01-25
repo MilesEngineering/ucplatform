@@ -12,4 +12,4 @@ OBJ_DIR := obj/$(BUILD_SPEC)
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
-include mk/multibuild.mk
+include $(MK_DIR)/multibuild.mk
