@@ -1,0 +1,4 @@
+# debugger halts when FreeRTOS simulator uses signals internally.
+# details here: https://www.freertos.org/FreeRTOS-simulator-for-Linux.html
+# need to run the below gdb command to make debugger ignore signals:
+handle SIGUSR1 nostop noignore noprint 
