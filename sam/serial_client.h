@@ -16,6 +16,7 @@ class SerialHeaderWithHelpers : public SerialHeader
         SerialHeaderWithHelpers();
         void InitializeFromMessage(const Message& msg);
         void SetMessage(Message& msg) const;
+        bool StartSequenceValid();
         bool HeaderValid();
         bool BodyValid(const Message& msg);
 };
@@ -23,7 +24,7 @@ class SerialHeaderWithHelpers : public SerialHeader
 class SerialClient : public MessageClient
 {
     public:
-        SerialClient(const char* name, MessagePool& pool);
+        SerialClient(const char* name, MessagePool& pool, int period);
         void receiveByte(uint8_t byte);
     protected:
         SerialHeaderWithHelpers rxInProgressHdr;

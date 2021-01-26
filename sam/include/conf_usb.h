@@ -120,7 +120,8 @@ extern "C" {
 extern bool serial_console_cdc_enable(void);
 #define  UDI_CDC_DISABLE_EXT(port)         serial_console_cdc_disable()
 extern void serial_console_cdc_disable(void);
-#define  UDI_CDC_RX_NOTIFY(port)
+#define  UDI_CDC_RX_NOTIFY(port)           serial_console_rx_notify()
+extern void serial_console_rx_notify(void);
 #define  UDI_CDC_TX_EMPTY_NOTIFY(port)
 #define  UDI_CDC_SET_CODING_EXT(port,cfg)
 #define  UDI_CDC_SET_DTR_EXT(port,set)

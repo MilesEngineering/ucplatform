@@ -6,7 +6,7 @@
 #include "services/ioport/ioport.h"
 #include "services/usb/class/cdc/device/udi_cdc.h"
 #include "services/usb/udc/udc.h"
-#include "services/sleepmgr/sleepmgr.h"
+#include <inttypes.h>
 
 static uint16_t crc16(uint8_t* data, int len)
 {
@@ -51,9 +51,19 @@ void SerialHeaderWithHelpers::SetMessage(Message& msg) const
     msg.SetTime(GetTime());
 }
 
-bool SerialHeaderWithHelpers::HeaderValid()
+bool SerialHeaderWithHelpers::StartSequenceValid()
 {
     if(GetStartSequence() != SerialHeader::StartSequenceFieldInfo::defaultValue)
+    {
+        //increment statistics
+        return false;
+    }
+    return true;
+}
+
+bool SerialHeaderWithHelpers::HeaderValid()
+{
+    if(!StartSequenceValid())
     {
         //increment statistics
         return false;
@@ -80,8 +90,8 @@ bool SerialHeaderWithHelpers::BodyValid(const Message& msg)
     return true;
 }
 
-SerialClient::SerialClient(const char* name, MessagePool& pool)
-: MessageClient(name, &pool, 1000)
+SerialClient::SerialClient(const char* name, MessagePool& pool, int period)
+: MessageClient(name, &pool, period)
 {
 }
 
@@ -96,18 +106,38 @@ void SerialClient::receiveByte(uint8_t byte)
             if(rxInProgressHdr.HeaderValid())
             {
                 rxInProgressMsg.Allocate(rxInProgressHdr.GetDataLength());
-                rxInProgressHdr.SetMessage(rxInProgressMsg);
+                if(rxInProgressMsg.Exists())
+                {
+                    rxInProgressHdr.SetMessage(rxInProgressMsg);
+                }
+                else
+                {
+                    //# Since the message was valid but we couldn't use it, it's correct
+                    //# to throw the entire header away and resynchronize on valid header
+                    //# after the end of it.  We'll of course have to throw the body away
+                    //# one byte at a time until we find the next valid header.
+                    printf("%s:%d, Couldn't allocate, throwing away %d bytes rx msg\n", __FILE__, __LINE__, rxInProgressHdr.GetDataLength());
+                    rxProgress = 0;
+                }
             }
             else
             {
-                memmove(rxInProgressHdr.m_data, &rxInProgressHdr.m_data[1], SerialHeader::SIZE-1);
-                rxProgress--;
+                const int len_for_start_sequence = sizeof(SerialHeader::StartSequenceFieldInfo::defaultValue);
+                //#printf("\nBAD HDR ");
+                do
+                {
+                    //#printf("%02X ", rxInProgressHdr.m_data[0]);
+                    memmove(rxInProgressHdr.m_data, &rxInProgressHdr.m_data[1], SerialHeader::SIZE-1);
+                    rxProgress--;
+                } while(rxProgress >= len_for_start_sequence && !rxInProgressHdr.StartSequenceValid());
+                //#printf("\n");
             }
         }
     }
     else
     {
         rxInProgressMsg.GetDataPointer()[rxProgress - SerialHeader::SIZE] = byte;
+        rxProgress++;
         if(rxProgress == SerialHeader::SIZE + rxInProgressHdr.GetDataLength())
         {
             if(rxInProgressHdr.BodyValid(rxInProgressMsg))
@@ -115,13 +145,16 @@ void SerialClient::receiveByte(uint8_t byte)
                 //# header was already set up above, this should have no effect.
                 rxInProgressHdr.SetMessage(rxInProgressMsg);
                 SendMessage(rxInProgressMsg);
+                printf("serial Rx %" PRId32 "\n", rxInProgressMsg.GetMessageID());
                 rxInProgressMsg.Deallocate();
                 rxProgress = 0;
             }
             else
             {
-                // throw away one byte from header
+                // throw away one byte from header and decrement progress
                 memmove(rxInProgressHdr.m_data, &rxInProgressHdr.m_data[1], SerialHeader::SIZE-1);
+                rxProgress--;
+                // if we still have some body left, shift it into the header
                 if(rxProgress > SerialHeader::SIZE)
                 {
                     // put first byte of body (if exists) on end of header
@@ -130,13 +163,14 @@ void SerialClient::receiveByte(uint8_t byte)
                     memmove(rxInProgressMsg.GetDataPointer(), &rxInProgressMsg.GetDataPointer()[1], rxProgress-SerialHeader::SIZE-1);
                     rxProgress--;
                 }
+                printf("serial INVALID body\n");
             }
         }
     }
 }
 
 UsartClient::UsartClient(const char* name, Usart* uart, MessagePool& pool)
-: SerialClient(name, pool),
+: SerialClient(name, pool, 1000),
   m_uart(uart)
 {
 }
@@ -267,15 +301,28 @@ void UsartClient::HandleInterrupt()
 }
 
 UsbCdcClient::UsbCdcClient(MessagePool& pool)
-: SerialClient("USB_CDC", pool),
+: SerialClient("USB_CDC", pool, 1000/*ms*/),
   m_usb(USBHS)
 {
 }
 void UsbCdcClient::PeriodicTask()
 {
-    while(udi_cdc_is_rx_ready())
+    //# Note: Ubuntu Linux ModemManager will attempt to probe serial ports by
+    //# AT commands which seem to consist of 7e 00 78 f0 7e 7e 00 78 f0 7e.
+    //# So don't be surprised if you get some junk when the PC connects, even
+    //# if your PC application isn't sending it.
+    if(udi_cdc_is_rx_ready())
     {
-        receiveByte(udi_cdc_getc());
+        //#printf("USB read ");
+        int bytes=0;
+        while(udi_cdc_is_rx_ready())
+        {
+            uint8_t byte = udi_cdc_getc();
+            //#printf("%02X ", byte);
+            receiveByte(byte);
+            bytes++;
+        }
+        //#printf("%d\n", bytes);
     }
 }
 void UsbCdcClient::HandleReceivedMessage(Message& msg)
@@ -304,13 +351,6 @@ void UsbCdcClient::HandleReceivedMessage(Message& msg)
 
 void UsbCdcClient::Initialize()
 {
-    //# added during debug of broken stdout.  unsure if we should do anything with sleepmgr or not!
-    //# adding this here didn't fix broken serial stdio when udc_start() is called, but also didn't
-    //# break anything when we don't call udc_start().
-	// Initialize the sleep manager
-	//#sleepmgr_init();
-	//#sleepmgr_lock_mode(SLEEPMGR_ACTIVE);
-
 	/*
 	 * Start and attach USB CDC device interface for devices with
 	 * integrated USB interfaces.  Assume the VBUS is present if
@@ -331,7 +371,7 @@ extern "C" void USART0_Handler(void)
 extern "C" bool serial_console_cdc_enable(void)
 {
     UsbCdcClient::Instance()->m_connected = true;
-    printf("USB CDC connected\n");
+    printf("UDI_CDC_ENABLE_EXT()\n");
     return true;
 }
 //# UDI_CDC_DISABLE_EXT callback in ASF3 is broken!
@@ -339,5 +379,11 @@ extern "C" bool serial_console_cdc_enable(void)
 extern "C" void serial_console_cdc_disable(void)
 {
     UsbCdcClient::Instance()->m_connected = false;
-    printf("USB CDC disconnected\n");
+    printf("UDI_CDC_DISABLE_EXT()\n");
+}
+
+extern "C" void serial_console_rx_notify(void)
+{
+    UsbCdcClient::Instance()->Wake();
+    //#printf("UDI_CDC_RX_NOTIFY()\n");
 }
