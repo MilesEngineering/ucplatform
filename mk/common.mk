@@ -8,6 +8,8 @@ include $(MK_DIR)/msg.mk
 include $(MK_DIR)/freertos.mk
 
 TARGET := $(OBJ_DIR)/$(TARGET)
+PRINTF_DICTIONARY_H := $(OBJ_DIR)/printf_dictionary.h
+PRINTF_DICTIONARY_JSON := $(OBJ_DIR)/printf_dictionary.json
 
 all:: ${TARGET}
 
@@ -23,21 +25,27 @@ GDB := ${PREFIX}gdb
 
 INCLUDE_DIRS += -I$(UCPLATFORM) -I$(UCPLATFORM)/$(BUILD_SPEC)/include
 
+# for auto-generated $(PRINTF_DICTIONARY_H)
+INCLUDE_DIRS += -I$(OBJ_DIR)
+
 OBJS := ${SRC:%.cpp=$(OBJ_DIR)/%.o}
 OBJS := ${OBJS:%.c=$(OBJ_DIR)/%.o}
 DEPS := ${OBJS:%.o=%.d}
 
 # rules to compile and link
-$(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: %.cpp  $(PRINTF_DICTIONARY_H) | $(OBJ_DIR)
 	@mkdir -p $(dir $@)
 	${CXX} ${INCLUDE_DIRS} ${CXXFLAGS} -c $< -o $@
 
-$(OBJ_DIR)/%.o: %.c | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: %.c $(PRINTF_DICTIONARY_H) | $(OBJ_DIR)
 	@mkdir -p $(dir $@)
 	${CC} ${INCLUDE_DIRS} ${CFLAGS} -c $< -o $@
 
 $(TARGET): ${OBJS}
 	${CXX} ${LDFLAGS} -o $@ ${OBJS} ${LIBS} 
+
+$(PRINTF_DICTIONARY_H): $(SRC)
+	msgfindprints . $(PRINTF_DICTIONARY_JSON) $(PRINTF_DICTIONARY_H)
 
 # clean by deleting only files we intended to build
 clean::

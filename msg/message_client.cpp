@@ -30,10 +30,12 @@ MessageClient::MessageClient(const char* name, MessagePool* pool, int period, in
     if(MessageClient::s_firstClient == nullptr)
     {
         MessageClient::s_firstClient = this;
+        m_id = 1;
     }
     else
     {
         MessageClient::s_lastClient->m_nextClient = this;
+        m_id = MessageClient::s_lastClient->m_id + 1;
     }
     MessageClient::s_lastClient = this;
 }
@@ -76,6 +78,15 @@ MessageClient* MessageClient::CurrentClient()
     MessageClient* c = (MessageClient*)pvTaskGetThreadLocalStoragePointer( nullptr, 0 );
     return c;
 }
+int MessageClient::CurrentClientID()
+{
+    MessageClient* c = CurrentClient();
+    if(c)
+    {
+        return c->ID();
+    }
+    return 0;
+}
 MessagePool* MessageClient::GetMessagePool()
 {
     return m_msgPool;
@@ -89,6 +100,10 @@ void MessageClient::PeriodicTask()
 }
 void MessageClient::Initialize()
 {
+}
+int MessageClient::ID()
+{
+    return m_id;
 }
 void MessageClient::Wake()
 {

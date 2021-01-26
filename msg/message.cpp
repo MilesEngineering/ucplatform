@@ -9,6 +9,7 @@
 
 //# for memcpy
 #include <string.h>
+
 #include <stdio.h>
 
 // Threshold for deciding if a message buffer is undesirably old,
@@ -76,16 +77,16 @@ bool Message::Allocate(int size)
                 SetDataLength(size);
                 return true;
             }
-            printf("%s line %d, ERROR!  Failed to allocate\n", __FILE__, __LINE__);
+            printf("Failed to allocate %d byte message\n", size);
         }
         else
         {
-            printf("%s line %d, ERROR!  No pool defined\n", __FILE__, __LINE__);
+            printf("No pool defined\n");
         }
     }
     else
     {
-        printf("%s line %d, ERROR!  Allocating, but already allocated\n", __FILE__, __LINE__);
+        printf("Allocating, but already allocated\n");
     }
     return false;
 }

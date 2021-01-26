@@ -2,7 +2,7 @@
 
 #include "queue.h"
 #include "message_client.h"
-#include "stdio.h"
+#include <stdio.h>
 
 MessagePool* MessagePool::s_interruptContextPool = 0;
 
@@ -40,7 +40,7 @@ MessagePool* MessagePool::CurrentPool()
     {
         return currentClient->GetMessagePool();
     }
-    printf("%s line %d, ERROR!  No current client defined!\n", __FILE__, __LINE__);
+    printf("No current client defined!\n");
     return nullptr;
 }
 MessageBuffer* MessagePool::Allocate(int size)
@@ -67,7 +67,7 @@ MessageBuffer* MessagePool::Allocate(int size)
 #endif
     if(msg && size > msg->m_bufferSize)
     {
-        printf("ERROR!  Can't allocate %d byte buffer, max size is %d\n", size, msg->m_bufferSize);
+        printf("Can't allocate %d byte buffer, max size is %d\n", size, msg->m_bufferSize);
         Free(msg);
         return 0;
     }

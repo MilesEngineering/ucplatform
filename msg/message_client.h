@@ -25,28 +25,31 @@ class MessageClient
         MessagePool* GetMessagePool();
         void DeliverMessage(Message& msg);
         static void InitializeAll();
+        static int CurrentClientID();
+        int ID();
         void Wake();
 	protected:
         virtual void HandleReceivedMessage(Message& msg/*, MsgInfo* msgInfo*/) = 0;
 		virtual void PeriodicTask();
         virtual void Initialize();
 	private:
+        int m_id = 0;
         TaskHandle_t m_taskHandle;
 		// how often the periodic function should be invoked - zero for never
 		int m_period;
         // last time we called our periodic function
-		TickType_t m_lastIdleTime;
+		TickType_t m_lastIdleTime = 0;
 		// count of errors encountered when trying to transmit
-		int m_txErrors;
-		int m_allocErrors;
+		int m_txErrors = 0;
+		int m_allocErrors = 0;
         MessagePool* m_msgPool;
         MessageQueue m_rxMsgs;
     
         // statistics related to messages.
-        int m_msg_buffers_allocated;
+        int m_msg_buffers_allocated = 0;
         // count of messages this client freed.  Not necessarily deallocated, unless refcount gets to zero.
-        int m_msgs_freed;
-        int m_msgs_stale;
+        int m_msgs_freed = 0;
+        int m_msgs_stale = 0;
         
         // to manage initialization after construction
         static MessageClient* s_firstClient;
