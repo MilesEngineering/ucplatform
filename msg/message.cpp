@@ -198,9 +198,13 @@ TimeType Message::GetTime() const
 {
     return m_buf->m_hdr.GetTime() * 1000.0;
 }
-uint8_t* Message::GetDataPointer() const
+uint8_t* Message::GetHeaderDataPointer() const
 {
     return m_buf->m_hdr.m_data;
+}
+uint8_t* Message::GetDataPointer() const
+{
+    return m_data;
 }
 int Message::GetTotalLength() const
 {

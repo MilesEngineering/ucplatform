@@ -58,6 +58,7 @@ class Message
 		MessageIdType GetMessageID() const;
 		int       GetDataLength() const;
         uint8_t*  GetDataPointer() const;
+        uint8_t*  GetHeaderDataPointer() const;
         int       GetTotalLength() const;
         int       GetSource() const;
         int       GetDestination() const;

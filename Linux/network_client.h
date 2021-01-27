@@ -69,7 +69,7 @@ class NetworkClient : public MessageClient
         void SendSocketMsg(Message& msg)
         {
             if(m_sock)
-                send(m_sock, msg.GetDataPointer(), msg.GetTotalLength(), 0);
+                send(m_sock, msg.GetHeaderDataPointer(), msg.GetTotalLength(), 0);
         }
         void PeriodicTask()
         {
