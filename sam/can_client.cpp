@@ -97,6 +97,7 @@ bool MsgFromCANPacket(Message& msg, const mcan_rx_element_fifo_0& packet)
     msg.SetSource(hdr.GetSource());
     msg.SetDestination(hdr.GetDestination());
     msg.SetTime(packet.R1.bit.RXTS); // Receive Timestamp
+    memcpy(msg.GetDataPointer(), packet.data, msg.GetDataLength());
 
     // ignored
     packet.R0.bit.RTR; // remote transmission request
