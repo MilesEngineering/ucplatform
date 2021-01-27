@@ -243,6 +243,8 @@ typedef struct {
    .iFunction                    = UDI_CDC_IAD_STRING_ID_##port,\
    }
 
+//# Change from CDC_PROTOCOL_V25TER to zero, so we don't claim to be a modem.
+//# If we claim to be a modem, linux ModemManager will interrogate us
 //! Content of CDC COMM interface descriptor for all speeds
 #define UDI_CDC_COMM_DESC(port) { \
    .iface.bLength                = sizeof(usb_iface_desc_t),\
@@ -251,7 +253,7 @@ typedef struct {
    .iface.bNumEndpoints          = 1,\
    .iface.bInterfaceClass        = CDC_CLASS_COMM,\
    .iface.bInterfaceSubClass     = CDC_SUBCLASS_ACM,\
-   .iface.bInterfaceProtocol     = CDC_PROTOCOL_V25TER,\
+   .iface.bInterfaceProtocol     = CDC_INTERFACE_PROTOCOL/*CDC_PROTOCOL_V25TER*/,\
    .header.bFunctionLength       = sizeof(usb_cdc_hdr_desc_t),\
    .header.bDescriptorType       = CDC_CS_INTERFACE,\
    .header.bDescriptorSubtype    = CDC_SCS_HEADER,\

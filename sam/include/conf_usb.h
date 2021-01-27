@@ -60,6 +60,11 @@ extern "C" {
 // (USB_CONFIG_ATTR_REMOTE_WAKEUP|USB_CONFIG_ATTR_SELF_POWERED)
 // (USB_CONFIG_ATTR_REMOTE_WAKEUP|USB_CONFIG_ATTR_BUS_POWERED)
 
+//# Override default bInterfaceProtocol for USB CDC virtual comm port of
+//# CDC_PROTOCOL_V25TER to zero, so we don't claim to be a modem.
+//# If we claim to be a modem, linux ModemManager will interrogate us.
+#define CDC_INTERFACE_PROTOCOL 0
+
 //! USB Device string definitions (Optional)
 #define  USB_DEVICE_MANUFACTURE_NAME      "MilesEng"
 #define  USB_DEVICE_PRODUCT_NAME          "CAN-FD"
