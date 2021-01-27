@@ -1,6 +1,7 @@
 #include "debug_printf.h"
 #include "msg/message_client.h"
 #include "msg/message_bus.h"
+#include "debug_server.h"
 
 // auto-generated header files for messages to output debug info
 #include "Printf.h"
@@ -16,11 +17,19 @@
 #define PRIORITY_TYPE PrintfIDMessage::Priorities
 #endif
 
-void vLogStatement(PRIORITY_TYPE priority, int stream_id, int format_id, const char *fmt, int argc, va_list argp)
+void vLogStatement(PRIORITY_TYPE priority, int format_id, const char *fmt, int argc, va_list argp)
 {
+    int stream_id = MessageClient::CurrentClientID();
 #ifdef OUTPUT_DEBUG_STRINGS
     UNUSED(format_id);
-    PrintfMessage msg;
+    MessageBuffer* buf = DebugServer::GetBuffer(PrintfIDMessage::MSG_SIZE);
+    if(buf == 0)
+    {
+        printf("!");
+        vprintf(fmt, argp);
+        return;
+    }
+    PrintfMessage msg(buf);
     if(msg.Exists())
     {
         msg.SetStreamID(stream_id);
@@ -31,7 +40,14 @@ void vLogStatement(PRIORITY_TYPE priority, int stream_id, int format_id, const c
     }
 #else
     UNUSED(fmt);
-    PrintfIDMessage msg;
+    MessageBuffer* buf = DebugServer::GetBuffer(PrintfMessage::MSG_SIZE);
+    if(buf == 0)
+    {
+        printf("!");
+        vprintf(fmt, argp);
+        return;
+    }
+    PrintfIDMessage msg(buf);
     if(msg.Exists())
     {
         msg.SetStreamID(stream_id);
@@ -49,25 +65,22 @@ void vLogStatement(PRIORITY_TYPE priority, int stream_id, int format_id, const c
 
 void _debug_printf(int count, int format_id, const char *fmt, ...)
 {
-    int stream_id = MessageClient::CurrentClientID();
 	va_list argp;
 	va_start(argp, fmt);
-	vLogStatement(PRIORITY_TYPE::Info, stream_id, format_id, fmt, count, argp);
+	vLogStatement(PRIORITY_TYPE::Info, format_id, fmt, count, argp);
 	va_end(argp);
 }
 void _debug_warn(int count, int format_id, const char *fmt, ...)
 {
-    int stream_id = MessageClient::CurrentClientID();
 	va_list argp;
 	va_start(argp, fmt);
-	vLogStatement(PRIORITY_TYPE::Warning, stream_id, format_id, fmt, count, argp);
+	vLogStatement(PRIORITY_TYPE::Warning, format_id, fmt, count, argp);
 	va_end(argp);
 }
 void _debug_error(int count, int format_id, const char *fmt, ...)
 {
-    int stream_id = MessageClient::CurrentClientID();
 	va_list argp;
 	va_start(argp, fmt);
-	vLogStatement(PRIORITY_TYPE::Error, stream_id, format_id, fmt, count, argp);
+	vLogStatement(PRIORITY_TYPE::Error, format_id, fmt, count, argp);
 	va_end(argp);
 }

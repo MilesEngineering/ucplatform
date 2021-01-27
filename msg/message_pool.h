@@ -9,7 +9,7 @@
 class MessagePool
 {
     public:
-        MessagePool(uint8_t* buffer, int count, int size);
+        MessagePool(uint8_t* buffer, int buffer_size, int buf_count);
         static MessagePool* CurrentPool();
         static void SetInterruptContextPool(MessagePool& pool);
         MessageBuffer* Allocate(int size);
@@ -17,6 +17,18 @@ class MessagePool
     private:
         QueueHandle_t m_freeList;
         static MessagePool* s_interruptContextPool;
+};
+
+template <int buf_size, int buf_count>
+class MessagePoolWithStorage : public MessagePool
+{
+    public:
+        MessagePoolWithStorage()
+        : MessagePool(m_buffer, buf_size, buf_count)
+        {
+        }
+    private:
+        uint8_t m_buffer[buf_size*buf_count];
 };
 
 #endif

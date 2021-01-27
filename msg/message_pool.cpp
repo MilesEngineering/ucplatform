@@ -6,21 +6,21 @@
 
 MessagePool* MessagePool::s_interruptContextPool = 0;
 
-MessagePool::MessagePool(uint8_t* buffer, int count, int size)
+MessagePool::MessagePool(uint8_t* buffer, int buffer_size, int buf_count)
 {
-    m_freeList = xQueueCreate(count, sizeof(void*));
+    m_freeList = xQueueCreate(buf_count, sizeof(void*));
     configASSERT( m_freeList );
     
-    for(int i=0; i<count; i++)
+    for(int i=0; i<buf_count; i++)
     {
-        MessageBuffer* msg = (MessageBuffer*)&buffer[i*size];
+        MessageBuffer* msg = (MessageBuffer*)&buffer[i*buffer_size];
 #ifdef MSG_REFERENCE_COUNTING
         // set non-atomically before we put onto free list.
         // no one else can have a reference before that.
         std::atomic_store(&msg->m_referenceCount, 1);
 #endif
         msg->m_owner = this;
-        msg->m_bufferSize = size - offsetof(MessageBuffer, m_data);
+        msg->m_bufferSize = buffer_size - offsetof(MessageBuffer, m_data);
         Free(msg);
     }
 }
