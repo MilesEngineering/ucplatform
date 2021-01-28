@@ -1,5 +1,6 @@
 ifeq (samv71,$(SAM_VARIANT))
 
+JLINK_DEVICE ?= ATSAMV71Q21
 FLAGS += -D BOARD=SAMV71_XPLAINED_ULTRA -D __SAMV71Q21B__
 
 LINKER_SCRIPT = $(ASF)/sam/utils/linker_scripts/samv71/samv71q21/gcc/flash.ld

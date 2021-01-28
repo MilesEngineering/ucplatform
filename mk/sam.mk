@@ -118,32 +118,21 @@ LDFLAGS += -Wl,--entry=Reset_Handler -Wl,--cref -Wl,-Map=$(MAP_FILE),--cref
 LDFLAGS += $(LIB_PATH)
 LDFLAGS += -specs=nano.specs
 
-OPENOCD_FLASH_COMMAND = \
-    -c init -c targets -c "halt" \
-    -c "flash write_image erase $(TARGET)" \
-    -c "verify_image $(TARGET)" \
-    -c "reset run" -c shutdown
+# used to flash, and to debug with eclipse, vscode, qtcreator
+#include $(MK_DIR)/openocd.mk
 
-openocd:
-	openocd -f $(OPEN_OCD_CONFIG)
+#include $(MK_DIR)/eclipse.mk
+#include $(MK_DIR)/vscode.mk
+include $(MK_DIR)/jlink.mk
 
-install: all
-	@echo "Need to flash using JTAG"
-	openocd -f $(OPEN_OCD_CONFIG) $(OPENOCD_FLASH_COMMAND)
-
-# this launches GDB, but should probably do more commands to attach to OpenOCD.
-debug.gdb: all
-	$(GDB) $(TARGET)
-	#inside gdb: target extended-remote localhost:3333
-	#inside gdb: monitor halt reset
-	#inside gdb: continue
-	#inside gdb: ctrl-c
-
-include $(MK_DIR)/eclipse.mk
-include $(MK_DIR)/vscode.mk
-
+# choose one of these for debugging
 #debug: debug.gdb
 #debug: debug.eclipse
-debug: debug.vscode
+#debug: debug.vscode
+debug: debug.ozone
+
+# choose one of these for flashing
+#install: all install.openocd
+install: all install.jlink
 
 endif
