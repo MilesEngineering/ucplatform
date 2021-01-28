@@ -10,7 +10,7 @@ debug.eclipse: | $(ECLIPSE_DIR) $(OBJ_DIR)/openocd.cdt
 
 
 $(ECLIPSE_DIR):
-	@if [ ! -f '@(ECLIPSE_TARBALL)' ]; then \
+	@if [ ! -f '$(ECLIPSE_TARBALL)' ]; then \
 	    wget https://mirror.umd.edu/eclipse/tools/cdt/releases/10.1/cdt-10.1.0/rcp/$(ECLIPSE_TARBALL); \
 	fi
 	mkdir $(ECLIPSE_DIR)
