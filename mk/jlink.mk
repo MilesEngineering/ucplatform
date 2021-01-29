@@ -4,7 +4,7 @@
 SEGGER_DOWNLOAD := https://www.segger.com/downloads/jlink/
 JLINK_TOOLS_DEB := JLink_Linux_x86_64.deb
 OZONE_DEB := Ozone_Linux_V322a_x86_64.deb
-OZONE := /opt/SEGGER/ozone/3.22.1/Ozone
+OZONE := /usr/bin/Ozone
 JFLASH := /usr/bin/JFlash
 
 .PHONY: debug.ozone
@@ -23,8 +23,10 @@ else
 	$(OZONE) -programfile $(TARGET) -device $(JLINK_DEVICE) -select USB -if SWD -project $(OZONE_PROJECT)
 endif
 
+# This works with normal JLink, but not EDU model
 install.jlink: | $(JFLASH)
-	$(JFLASH) --help
+	$(JFLASH) -hide -usb -open$(TARGET) -program -verify -exit
+
 
 # if the Ozone binary doesn't exist at it's installed location, install it.
 $(OZONE):
