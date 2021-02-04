@@ -111,23 +111,35 @@ class NetworkClient : public MessageClient
                 if(m_gotHdr)
                 {
                     int len = m_buf->m_hdr.GetDataLength();
-                    if(len > m_buf->m_bufferSize)
-                    {
-                        printf("Error!  Received message too big for buffer!\n");
-                        return;
-                    }
-                    int ret = recv(m_sock, m_buf->m_data, len, MSG_DONTWAIT);
-                    if(ret < 0)
-                    {
-                        return;
-                    }
-                    else if(ret == len)
+                    // special case of message body length == 0
+                    if(len == 0)
                     {
                         //printf("Got body\n");
                         Message msg(m_buf);
                         SendMessage(msg);
                         m_buf = 0;
                         m_gotHdr = false;
+                    }
+                    else
+                    {
+                        if(len > m_buf->m_bufferSize)
+                        {
+                            printf("Error!  Received message too big for buffer!\n");
+                            return;
+                        }
+                        int ret = recv(m_sock, m_buf->m_data, len, MSG_DONTWAIT);
+                        if(ret < 0)
+                        {
+                            return;
+                        }
+                        else if(ret == len)
+                        {
+                            //printf("Got body\n");
+                            Message msg(m_buf);
+                            SendMessage(msg);
+                            m_buf = 0;
+                            m_gotHdr = false;
+                        }
                     }
                 }
             }

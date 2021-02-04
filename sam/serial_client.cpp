@@ -8,6 +8,10 @@
 #include "services/usb/udc/udc.h"
 #include <inttypes.h>
 
+#include "debug_printf.h"
+
+#define ESCAPED_FILE_PATH __ucplatform_sam_serial_client
+
 static uint16_t crc16(uint8_t* data, int len)
 {
     uint16_t crc = 0;
@@ -82,8 +86,10 @@ bool SerialHeaderWithHelpers::BodyValid(const Message& msg)
         //increment statistics
         return false;
     }
-    if(crc16(msg.GetDataPointer(), GetDataLength()) != GetBodyChecksum())
+    uint16_t calculatedCrc = crc16(msg.GetDataPointer(), GetDataLength());
+    if(calculatedCrc != GetBodyChecksum())
     {
+        debugWarn("crc16[%d] 0x%02X != 0x%02X\n", GetDataLength(), calculatedCrc, GetBodyChecksum());
         //increment statistics
         return false;
     }
@@ -138,33 +144,36 @@ void SerialClient::receiveByte(uint8_t byte)
     {
         rxInProgressMsg.GetDataPointer()[rxProgress - SerialHeader::SIZE] = byte;
         rxProgress++;
-        if(rxProgress == SerialHeader::SIZE + rxInProgressHdr.GetDataLength())
+    }
+    // This is a separate check, and not just inside the 'else' above, to
+    // handle receiving messages with zero-length body.
+    if(rxProgress >= SerialHeader::SIZE &&
+       rxProgress == SerialHeader::SIZE + rxInProgressHdr.GetDataLength())
+    {
+        if(rxInProgressHdr.BodyValid(rxInProgressMsg))
         {
-            if(rxInProgressHdr.BodyValid(rxInProgressMsg))
+            //# header was already set up above, this should have no effect.
+            rxInProgressHdr.SetMessage(rxInProgressMsg);
+            SendMessage(rxInProgressMsg);
+            printf("serial Rx %" PRId32 "\n", rxInProgressMsg.GetMessageID());
+            rxInProgressMsg.Deallocate();
+            rxProgress = 0;
+        }
+        else
+        {
+            // throw away one byte from header and decrement progress
+            memmove(rxInProgressHdr.m_data, &rxInProgressHdr.m_data[1], SerialHeader::SIZE-1);
+            rxProgress--;
+            // if we still have some body left, shift it into the header
+            if(rxProgress > SerialHeader::SIZE)
             {
-                //# header was already set up above, this should have no effect.
-                rxInProgressHdr.SetMessage(rxInProgressMsg);
-                SendMessage(rxInProgressMsg);
-                printf("serial Rx %" PRId32 "\n", rxInProgressMsg.GetMessageID());
-                rxInProgressMsg.Deallocate();
-                rxProgress = 0;
-            }
-            else
-            {
-                // throw away one byte from header and decrement progress
-                memmove(rxInProgressHdr.m_data, &rxInProgressHdr.m_data[1], SerialHeader::SIZE-1);
+                // put first byte of body (if exists) on end of header
+                rxInProgressHdr.m_data[SerialHeader::SIZE] = rxInProgressMsg.GetDataPointer()[0];
+                // shift body down one
+                memmove(rxInProgressMsg.GetDataPointer(), &rxInProgressMsg.GetDataPointer()[1], rxProgress-SerialHeader::SIZE-1);
                 rxProgress--;
-                // if we still have some body left, shift it into the header
-                if(rxProgress > SerialHeader::SIZE)
-                {
-                    // put first byte of body (if exists) on end of header
-                    rxInProgressHdr.m_data[SerialHeader::SIZE] = rxInProgressMsg.GetDataPointer()[0];
-                    // shift body down one
-                    memmove(rxInProgressMsg.GetDataPointer(), &rxInProgressMsg.GetDataPointer()[1], rxProgress-SerialHeader::SIZE-1);
-                    rxProgress--;
-                }
-                printf("serial INVALID body\n");
             }
+            printf("serial INVALID body\n");
         }
     }
 }
