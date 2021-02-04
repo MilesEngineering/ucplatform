@@ -21,7 +21,6 @@ build_all :
 		if [ "$$spec" = "_dummy_" ]; then\
 			continue ;\
 		fi;\
-		echo " ";\
 		"$(MAKE)" --no-print-directory $(MFLAGS) BUILD_SPEC=$$spec DEBUG_MODE=$(DEBUG_MODE) TRACE=$(TRACE) || exit;\
 	done
 
@@ -31,7 +30,6 @@ clean_all :
 		if [ "$$spec" = "_dummy_" ]; then\
 			continue ;\
 		fi;\
-		echo " ";\
 		"$(MAKE)" --no-print-directory $(MFLAGS) BUILD_SPEC=$$spec DEBUG_MODE=$(DEBUG_MODE) TRACE=$(TRACE) clean || exit;\
 	done
 

@@ -19,7 +19,11 @@ FLAGS += -mcpu=$(ARCH) -mthumb
 # set architecture to find freertos port-specific files
 FREERTOS_PORT_DIR := ARM_CM7/r0p1
 
+# full relative path to directory
 ASF := $(UCPLATFORM)/sam/asf
+
+# src dir should start with 'ucplatform', which must be added to VPATH
+ASF_SRC := ucplatform/sam/asf
 
 # ASF has lots of #include statements without any path component, requiring
 # a huge set of include directories.
@@ -54,34 +58,34 @@ INCLUDE_DIRS += \
 
 # These source files are pretty much required for any project
 SRC += \
-       $(ASF)/sam/utils/syscalls/gcc/syscalls.c                             \
-       $(ASF)/common/utils/interrupt/interrupt_sam_nvic.c                   \
-       $(ASF)/common/services/clock/$(SAM_VARIANT)/sysclk.c                  \
-       $(ASF)/common/services/delay/sam/cycle_counter.c                     \
-       $(ASF)/common/utils/stdio/read.c                                     \
-       $(ASF)/common/utils/stdio/write.c                                    \
-       $(ASF)/sam/drivers/pmc/pmc.c
+       $(ASF_SRC)/sam/utils/syscalls/gcc/syscalls.c                             \
+       $(ASF_SRC)/common/utils/interrupt/interrupt_sam_nvic.c                   \
+       $(ASF_SRC)/common/services/clock/$(SAM_VARIANT)/sysclk.c                  \
+       $(ASF_SRC)/common/services/delay/sam/cycle_counter.c                     \
+       $(ASF_SRC)/common/utils/stdio/read.c                                     \
+       $(ASF_SRC)/common/utils/stdio/write.c                                    \
+       $(ASF_SRC)/sam/drivers/pmc/pmc.c
 
 # startup code is processor specific, but SAM_VARIANT should find it
-SRC += $(ASF)/sam/utils/cmsis/$(SAM_VARIANT)/source/templates/gcc/startup_$(SAM_VARIANT).c  \
-       $(ASF)/sam/utils/cmsis/$(SAM_VARIANT)/source/templates/system_$(SAM_VARIANT).c
+SRC += $(ASF_SRC)/sam/utils/cmsis/$(SAM_VARIANT)/source/templates/gcc/startup_$(SAM_VARIANT).c  \
+       $(ASF_SRC)/sam/utils/cmsis/$(SAM_VARIANT)/source/templates/system_$(SAM_VARIANT).c
 
 # These source files are only needed if your project uses common peripherals.
 # Should maybe be removed from here and moved to the individual project Makefiles.
 SRC += \
-       $(ASF)/common/services/serial/usart_serial.c              \
-       $(ASF)/common/services/spi/sam_spi/spi_master.c           \
-       $(ASF)/sam/drivers/uart/uart.c                            \
-       $(ASF)/sam/drivers/usart/usart.c                          \
-       $(ASF)/sam/drivers/mcan/mcan.c                            \
+       $(ASF_SRC)/common/services/serial/usart_serial.c              \
+       $(ASF_SRC)/common/services/spi/sam_spi/spi_master.c           \
+       $(ASF_SRC)/sam/drivers/uart/uart.c                            \
+       $(ASF_SRC)/sam/drivers/usart/usart.c                          \
+       $(ASF_SRC)/sam/drivers/mcan/mcan.c                            \
 
 # need to leave out -Wpedantic for dozens of "error: ISO C forbids conversion of function pointer to object pointer type"
-$(OBJ_DIR)/$(ASF)/sam/utils/cmsis/$(SAM_VARIANT)/source/templates/gcc/startup_$(SAM_VARIANT).o : FLAGS += -Wno-pedantic
+$(OBJ_DIR)/$(ASF_SRC)/sam/utils/cmsis/$(SAM_VARIANT)/source/templates/gcc/startup_$(SAM_VARIANT).o : FLAGS += -Wno-pedantic
 # needed to avoid errors about unused zero-length CAN RX buffer arrays, and dead code that would access them
-$(OBJ_DIR)/$(ASF)/sam/drivers/mcan/mcan.o : FLAGS += -Wno-pedantic -Wno-array-bounds
+$(OBJ_DIR)/$(ASF_SRC)/sam/drivers/mcan/mcan.o : FLAGS += -Wno-pedantic -Wno-array-bounds
 
 ifneq ($(INCLUDE_SAM_USB_SUPPORT),)
-include ucplatform/mk/sam.usb.mk
+include $(MK_DIR)/sam.usb.mk
 endif
 
 FLAGS += \

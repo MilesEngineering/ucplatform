@@ -10,7 +10,7 @@
 
 #include "debug_printf.h"
 
-#define ESCAPED_FILE_PATH __ucplatform_sam_serial_client
+#define ESCAPED_FILE_PATH ___ucplatform_sam_serial_client
 
 static uint16_t crc16(uint8_t* data, int len)
 {

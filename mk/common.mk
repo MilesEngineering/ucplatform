@@ -1,6 +1,26 @@
 # directory of this makefile, so we can include our siblings
 MK_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
-UCPLATFORM := $(shell basename $(dir $(abspath $(MK_DIR))))
+
+# directory of UCPLATFORM, which is parent directory of this directory
+UCPLATFORM := $(shell realpath --relative-to $(CURDIR) $(MK_DIR)/../)
+
+# this is a little complicated, but the expected repo directory structure is:
+# rootdir/
+# rootdir/app1
+# rootdir/app2
+# rootdir/ucplatform
+# That^ allows for multiple microcontroller projects to share one copy of
+# ucplatform source code, but they each need to build it separately because
+# they will potentially set up #defines differently, hence shouldn't share
+# any object code.  In order for their obj directories to each have separate
+# ucplatform, and NOT let the obj dir location for ucplatform files contain
+# a .. in it, we need to add the parent directory of UCPLATFORM to VPATH.
+UCPLATFORM_PARENT := $(shell realpath --relative-to $(CURDIR) $(UCPLATFORM)/../)
+VPATH += $(UCPLATFORM_PARENT)
+
+# if TARGET isn't set, default it to the dirname of the Makefile
+ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+TARGET ?= $(notdir $(ROOT_DIR))
 
 include $(MK_DIR)/include.mk
 include $(MK_DIR)/$(BUILD_SPEC).mk
@@ -45,7 +65,7 @@ $(TARGET): ${OBJS}
 	${CXX} ${LDFLAGS} -o $@ ${OBJS} ${LIBS} 
 
 $(PRINTF_DICTIONARY_H): $(SRC)
-	msgfindprints . $(PRINTF_DICTIONARY_JSON) $(PRINTF_DICTIONARY_H)
+	msgfindprints .,$(UCPLATFORM) $(PRINTF_DICTIONARY_JSON) $(PRINTF_DICTIONARY_H)
 
 # clean by deleting only files we intended to build
 clean::
