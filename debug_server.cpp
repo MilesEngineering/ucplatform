@@ -15,7 +15,7 @@
 const uint8_t DICTIONARY_ID[] = {FORMAT_STR_DICTIONARY_ID};
 #endif
 
-#define ESCAPED_FILE_PATH __ucplatform_debug_server
+#define ESCAPED_FILE_PATH ___ucplatform_debug_server
 
 extern int global_debug_threshold;
 

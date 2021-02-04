@@ -5,23 +5,38 @@
 extern "C" {
 #endif
 
-// uncomment to use normal printf to stdio instead of redirecting it
-//#define USE_PRINTF_DIRECTLY
 
-#ifdef USE_PRINTF_DIRECTLY
+// Define some of the following in your Makefile to control where debug output goes.
+// You can define more than one, but be wary that anything using strings may result
+// in significant memory allocation, execution time, and increased firmware size.
 
-#define debugPrintf printf
-#define debugWarn printf
-#define debugError printf
+// 1) ENABLE_DEBUG_MSGS
+//    Output debug messages, with format string ID and arg list instead of strings.
+//    This is the most efficient way to get debug data out of a real embedded system.
+// 2) ENABLE_DEBUG_MSG_STRINGS
+//    Output strings inside messages, instead of format string ID and arg list.
+//    This works in a real embedded system, and doesn't require debug dictionaries, but isn't as efficient.
+// 3) ENABLE_DEBUG_SEGGER_RTT
+//    Output format string ID and arg list to Segger J-Link RTT.
+//    This is the highest performance and lowest overhead, but only works with J-Link attached.
+// 4) ENABLE_DEBUG_SEGGER_RTT_STRINGS
+//    Output strings to Segger J-Link RTT.  This isn't as efficient but doesn't need
+//    debug dictionaries.
+// 5) ENABLE_DEBUG_STDOUT
+//    Use printf, don't output messages.  Depending on your platform stdout may
+//    go to the screen (Linux), a UART or USB CDC (embedded platforms).
+//    This is sometimes convenient, but is the lower performance and least efficient.
 
-#else
-
+#ifdef ENABLE_DEBUG_MSGS
 #include "printf_dictionary.h"
-
 // For concatenating file and line into a single token.  Needs multiple
 // levels of macro invocation for some strange reason.
 #define TOKENPASTE(x, y) x ## _line_ ## y
 #define TOKENPASTE2(x, y) TOKENPASTE(x, y)
+
+#else
+#define TOKENPASTE2(x,y) (-1)
+#endif
 
 // Function declarations, with GCC attribute to perform printf-style
 // argument type checking as described at.  Note the params are counts
@@ -43,8 +58,6 @@ __attribute__ ((format (printf, 3, 4)));
 #define debugPrintf(...) _debug_printf(PP_NARG(__VA_ARGS__), TOKENPASTE2(ESCAPED_FILE_PATH, __LINE__), __VA_ARGS__)
 #define debugWarn(...)   _debug_warn  (PP_NARG(__VA_ARGS__), TOKENPASTE2(ESCAPED_FILE_PATH, __LINE__), __VA_ARGS__)
 #define debugError(...)  _debug_error (PP_NARG(__VA_ARGS__), TOKENPASTE2(ESCAPED_FILE_PATH, __LINE__), __VA_ARGS__)
-
-#endif
 
 #ifdef __cplusplus
 }

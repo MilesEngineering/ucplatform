@@ -7,37 +7,43 @@
 // auto-generated header files for messages to output debug info
 #include "Debug.h"
 
-// uncomment to output strings inside messages, instead of format string ID and arg list
-//#define OUTPUT_DEBUG_STRINGS
-
-// uncomment to output strings to Segger J-Link RTT
-#define USE_SEGGER_RTT
-
-#ifdef OUTPUT_DEBUG_STRINGS
+#ifdef ENABLE_DEBUG_MSG_STRINGS
 #define PRIORITY_TYPE PrintfMessage::Priorities
 #else
 #include <stdarg.h>
 #define PRIORITY_TYPE PrintfIDMessage::Priorities
 #endif
 
-#ifdef USE_SEGGER_RTT
+#if defined(ENABLE_DEBUG_SEGGER_RTT) || defined (ENABLE_DEBUG_SEGGER_RTT_STRINGS)
 #include "rtt/RTT/SEGGER_RTT.h"
 #define SEGGER_RTT_BUFFER_INDEX_FOR_PRINT 0
 #endif
 
+#ifdef ENABLE_DEBUG_SEGGER_RTT
+#include "tick.h"
+#endif
+
 int global_debug_threshold = (int)PRIORITY_TYPE::Warning;
+
+#ifdef ENABLE_DEBUG_SEGGER_RTT
+struct SeggerRttStruct
+{
+    uint8_t stream_id;
+    uint8_t priority;
+    uint16_t format_id;
+    uint32_t time;
+    uint32_t args[4];
+};
+#endif
 
 void vLogStatement(PRIORITY_TYPE priority, int format_id, const char *fmt, int argc, va_list argp)
 {
-    int stream_id = 0;
-    int required_priority = global_debug_threshold;
-    MessageClient* c = MessageClient::CurrentClient();
-    if(c)
+#ifdef ENABLE_DEBUG_STDOUT
     {
-        stream_id = c->ID();
-        required_priority = c->DebugThreshold();
+        vprintf(fmt, argp);
     }
-#ifdef USE_SEGGER_RTT
+#endif
+#ifdef ENABLE_DEBUG_SEGGER_RTT_STRINGS
     {
         //# Don't do string formatting here.  Instead call SEGGER_RTT_Write()
         //# or SEGGER_RTT_WriteNoLock/SEGGER_RTT_WriteSkipNoLock/
@@ -51,11 +57,37 @@ void vLogStatement(PRIORITY_TYPE priority, int format_id, const char *fmt, int a
         va_end(copy);
     }
 #endif
+#if defined(ENABLE_DEBUG_MSGS) || defined(ENABLE_DEBUG_MSG_STRINGS) || defined(ENABLE_DEBUG_SEGGER_RTT)
+    int stream_id = 0;
+    int required_priority = global_debug_threshold;
+    MessageClient* c = MessageClient::CurrentClient();
+    if(c)
+    {
+        stream_id = c->ID();
+        required_priority = c->DebugThreshold();
+    }
+#endif
+#ifdef ENABLE_DEBUG_SEGGER_RTT
+    {
+        SeggerRttStruct segger_struct;
+        segger_struct.stream_id = stream_id;
+        segger_struct.priority = (int)priority;
+        segger_struct.format_id = format_id;
+        segger_struct.time = GetTickCount();
+        for (int i=0; i<argc; i++)
+        {
+            segger_struct.args[i] = va_arg(argp, uint32_t);
+        }
+        SEGGER_RTT_Write(SEGGER_RTT_BUFFER_INDEX_FOR_PRINT, &segger_struct, offsetof(SeggerRttStruct, args) + argc*sizeof(segger_struct.args[0]));
+    }
+#endif
+#if defined(ENABLE_DEBUG_MSGS) || defined(ENABLE_DEBUG_MSG_STRINGS) || defined(ENABLE_DEBUG_SEGGER_RTT)
     if((int)priority < required_priority)
     {
         return;
     }
-#ifdef OUTPUT_DEBUG_STRINGS
+#endif
+#ifdef ENABLE_DEBUG_MSG_STRINGS
     UNUSED(format_id);
     MessageBuffer* buf = DebugServer::GetBuffer(PrintfIDMessage::MSG_SIZE);
     if(buf == 0)
@@ -73,7 +105,8 @@ void vLogStatement(PRIORITY_TYPE priority, int format_id, const char *fmt, int a
         msg.Buffer()[msg.GetDataLength()-1] = '\0';
         msg.SetDataLength(dataLen);
     }
-#else
+#endif
+#ifdef ENABLE_DEBUG_MSGS
     UNUSED(fmt);
     MessageBuffer* buf = DebugServer::GetBuffer(PrintfMessage::MSG_SIZE);
     if(buf == 0)
