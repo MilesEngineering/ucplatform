@@ -4,6 +4,7 @@
 #include "message.h"
 #include "message_queue.h"
 
+// FreeRTOS wants stack size in words, not bytes
 #define DEFAULT_STACK_SIZE 256
 // Higher numerical value is higher priority
 // Idle task uses priority zero.
@@ -22,11 +23,14 @@ class MessageClient
         void RunLoop();
 		void SendMessage(Message& msg);
         static MessageClient* CurrentClient();
+        static MessageClient* GetClient(int n);
         MessagePool* GetMessagePool();
         void DeliverMessage(Message& msg);
         static void InitializeAll();
         static int CurrentClientID();
-        int ID();
+        int ID() const;
+        int DebugThreshold() const;
+        void SetDebugThreshold(int threshold);
         void Wake();
 	protected:
         virtual void HandleReceivedMessage(Message& msg/*, MsgInfo* msgInfo*/) = 0;
@@ -34,7 +38,10 @@ class MessageClient
         virtual void Initialize();
 	private:
         int m_id = 0;
+        // priority threshold to output a debug message
+        int m_debugThreshold = 1;
         TaskHandle_t m_taskHandle;
+        int m_stackSize = 0;
 		// how often the periodic function should be invoked - zero for never
 		int m_period;
         // last time we called our periodic function
@@ -47,6 +54,8 @@ class MessageClient
     
         // statistics related to messages.
         int m_msg_buffers_allocated = 0;
+        int m_msg_rx_count = 0;
+        int m_msg_tx_count = 0;
         // count of messages this client freed.  Not necessarily deallocated, unless refcount gets to zero.
         int m_msgs_freed = 0;
         int m_msgs_stale = 0;

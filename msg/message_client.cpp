@@ -1,6 +1,8 @@
 #include "message_client.h"
 #include "message_bus.h"
 #include "tick.h"
+#include <string.h>
+#include "Debug.h"
 
 extern "C" void client_callback( void* pvParameters );
 
@@ -24,7 +26,7 @@ MessageClient::MessageClient(const char* name, MessagePool* pool, int period, in
                     (void*) this,    /* Parameter passed into the task. */
                     priority,        /* Priority at which the task is created. */
                     &m_taskHandle ); /* Used to pass out the created task's handle. */
-
+    m_stackSize = stacksize * sizeof( StackType_t);
     configASSERT( xReturned == pdPASS );
     
     if(MessageClient::s_firstClient == nullptr)
@@ -38,6 +40,8 @@ MessageClient::MessageClient(const char* name, MessagePool* pool, int period, in
         m_id = MessageClient::s_lastClient->m_id + 1;
     }
     MessageClient::s_lastClient = this;
+    
+    MessageBus::Subscribe(this, GetThreadInfoMessage::MSG_ID);
 }
 void MessageClient::RunLoop()
 {
@@ -55,7 +59,28 @@ void MessageClient::RunLoop()
         MessageBuffer* msgbuf = m_rxMsgs.get(wait_time);
         if(msgbuf)
         {
+            m_msg_rx_count++;
             Message msg(msgbuf);
+            switch(msg.GetMessageID())
+            {
+                case GetThreadInfoMessage::MSG_ID:
+                {
+                    GetThreadInfoMessage request(msgbuf);
+                    if(request.GetThreadID() == m_id)
+                    {
+                        ThreadInfoMessage reply;
+                        reply.SetThreadID(m_id);
+                        strncpy((char*)reply.ThreadName(), pcTaskGetName(m_taskHandle), ThreadInfoMessage::ThreadNameFieldInfo::count);
+                        reply.SetDebugThreshold(ThreadInfoMessage::Priorities(DebugThreshold()));
+                        reply.SetMsgRxCount(m_msg_rx_count);
+                        reply.SetMsgTxCount(m_msg_rx_count);
+                        reply.SetStackSize(m_stackSize);
+                        reply.SetStackUsed(uxTaskGetStackHighWaterMark(m_taskHandle));
+                        SendMessage(reply);
+                    }
+                    break;
+                }
+            }
             HandleReceivedMessage(msg);
         }
         else
@@ -67,6 +92,7 @@ void MessageClient::RunLoop()
 }
 void MessageClient::SendMessage(Message& msg)
 {
+    m_msg_tx_count++;
     MessageBus::SendMessage(msg, this);
 }
 MessageClient* MessageClient::CurrentClient()
@@ -76,6 +102,19 @@ MessageClient* MessageClient::CurrentClient()
         return s_isrCurrentClient;
     }
     MessageClient* c = (MessageClient*)pvTaskGetThreadLocalStoragePointer( nullptr, 0 );
+    return c;
+}
+MessageClient* MessageClient::GetClient(int n)
+{
+    MessageClient* c = s_firstClient;
+    while(c != NULL)
+    {
+        if(c->m_id == n)
+        {
+            return c;
+        }
+        c = c->m_nextClient;
+    }
     return c;
 }
 int MessageClient::CurrentClientID()
@@ -101,9 +140,17 @@ void MessageClient::PeriodicTask()
 void MessageClient::Initialize()
 {
 }
-int MessageClient::ID()
+int MessageClient::ID() const
 {
     return m_id;
+}
+int MessageClient::DebugThreshold() const
+{
+    return m_debugThreshold;
+}
+void MessageClient::SetDebugThreshold(int threshold)
+{
+    m_debugThreshold = threshold;
 }
 void MessageClient::Wake()
 {

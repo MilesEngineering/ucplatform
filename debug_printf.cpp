@@ -2,10 +2,10 @@
 #include "msg/message_client.h"
 #include "msg/message_bus.h"
 #include "debug_server.h"
+#include <string.h>
 
 // auto-generated header files for messages to output debug info
-#include "Printf.h"
-#include "PrintfID.h"
+#include "Debug.h"
 
 // uncomment to output strings inside messages, instead of format string ID and arg list
 //#define OUTPUT_DEBUG_STRINGS
@@ -25,9 +25,18 @@
 #define SEGGER_RTT_BUFFER_INDEX_FOR_PRINT 0
 #endif
 
+int global_debug_threshold = (int)PRIORITY_TYPE::Warning;
+
 void vLogStatement(PRIORITY_TYPE priority, int format_id, const char *fmt, int argc, va_list argp)
 {
-    int stream_id = MessageClient::CurrentClientID();
+    int stream_id = 0;
+    int required_priority = global_debug_threshold;
+    MessageClient* c = MessageClient::CurrentClient();
+    if(c)
+    {
+        stream_id = c->ID();
+        required_priority = c->DebugThreshold();
+    }
 #ifdef USE_SEGGER_RTT
     {
         //# Don't do string formatting here.  Instead call SEGGER_RTT_Write()
@@ -42,6 +51,10 @@ void vLogStatement(PRIORITY_TYPE priority, int format_id, const char *fmt, int a
         va_end(copy);
     }
 #endif
+    if((int)priority < required_priority)
+    {
+        return;
+    }
 #ifdef OUTPUT_DEBUG_STRINGS
     UNUSED(format_id);
     MessageBuffer* buf = DebugServer::GetBuffer(PrintfIDMessage::MSG_SIZE);
