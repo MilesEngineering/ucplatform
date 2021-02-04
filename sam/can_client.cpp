@@ -164,6 +164,8 @@ void CanClient::ConfigureHardware()
 
 void CanClient::Initialize()
 {
+    ConfigureHardware();
+
     // from MsgToolsExample/embedded/samv71/asf/sam/boards/same70_xplained/same70_xplained.h
     if(mcan_instance.hw == MCAN0)
     {
@@ -186,9 +188,7 @@ void CanClient::Initialize()
         ioport_set_pin_peripheral_mode(PIN_CAN1_TX_IDX, PIN_CAN1_TX_FLAGS);
         //# Need to figure out where transceiver 1 RS and EN pins connect!
     }
-    
-    ConfigureHardware();
-    
+        
     //# This may need to change in the future by deleting this line, and having
     //# multiple specific calls to AddRxFilter done externally.
     // Add Rx filter to receive everything (bitmask id2=0).
