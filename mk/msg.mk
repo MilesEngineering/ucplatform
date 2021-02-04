@@ -3,7 +3,7 @@
 # generated code directory to be shared by multiple repositories 
 # that are subdirectories of it (such as a repo for C++ code, another
 # for Matlab, another for Python GUI tools, another for a webserver).
-MSGTOOLS_CODEGEN_DIR ?= ../../obj/CodeGenerator/Cpp/
+MSGTOOLS_CODEGEN_DIR ?= $(shell realpath --relative-to $(CURDIR) $(UCPLATFORM)/../../obj/CodeGenerator/Cpp/)
 
 INCLUDE_DIRS += \
     -I${MSGTOOLS_CODEGEN_DIR} \
