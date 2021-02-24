@@ -36,7 +36,7 @@ all:: ${TARGET}
 FLAGS := -Wall -Werror -Wpedantic -Wextra $(OPTIMIZATION) -g -MMD -DBUILD_SPEC_$(subst /,_,$(BUILD_SPEC))=1 $(FLAGS)
 
 CFLAGS += ${FLAGS}
-CXXFLAGS += ${FLAGS}
+CXXFLAGS += -std=c++17 ${FLAGS}
 LDFLAGS += ${FLAGS}
 
 CC := ${PREFIX}gcc
@@ -77,4 +77,4 @@ clean::
 clobber::
 	-rm -rf $(OBJ_DIR)
 
--include $(OBJS:%.o=%.d)
+-include $(DEPS)
