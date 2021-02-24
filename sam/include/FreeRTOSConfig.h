@@ -30,6 +30,13 @@
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
+// 'register' keyword was removed in C++17 and greater,
+// defining it blank here allows including CMSIS files from C++ code.
+// see https://github.com/ARM-software/CMSIS_5/issues/345 for related topics.
+#if (__cplusplus - 0) >= 201703L
+  #define register
+#endif
+
 /*-----------------------------------------------------------
  * Application specific definitions.
  *
