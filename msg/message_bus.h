@@ -8,6 +8,7 @@
 //# Either from STL, or ETL: https://www.etlcpp.com/map.html
 #include <map>
 #include <vector>
+#include <message_key.h>
 
 class MessageBus
 {
@@ -26,13 +27,14 @@ class MessageBus
         {
             Instance()->m_greedyClients.push_back(client);
         }
-        static void Subscribe(MessageClient* client, MessageIdType msgid)
+        static void Subscribe(MessageClient* client, MessageKey key)
         {
-            Instance()->m_subscriptions.insert(std::pair<MessageIdType, MessageClient*>(msgid, client));
+            Instance()->m_subscriptions.insert(std::make_pair(key, client));
         }
         static void SendMessage(Message& msg, void* sender)
         {
-            int subcount = Instance()->m_subscriptions.count(msg.GetMessageID()) + Instance()->m_greedyClients.size();
+            MessageKey key(msg);
+            int subcount = Instance()->m_subscriptions.count(key) + Instance()->m_greedyClients.size();
             if(subcount == 0)
             {
                 return;
@@ -41,10 +43,10 @@ class MessageBus
             
             // See who subscribed to it, and give it to them.
             int i=0;
-            std::multimap<MessageIdType, MessageClient*>::iterator it;
-            for (it=Instance()->m_subscriptions.equal_range(msg.GetMessageID()).first; it!=Instance()->m_subscriptions.equal_range(msg.GetMessageID()).second; ++it)
+            
+            auto subscribersRange = Instance()->m_subscriptions.equal_range(key);
+            for (auto it=subscribersRange.first; it!=subscribersRange.second; ++it)
             {
-                //MessageIdType id = (*it).first;
                 MessageClient* c = (*it).second;
                 if(sender != c)
                     DeliverToClient(c, msg, i == subcount);
@@ -84,7 +86,7 @@ class MessageBus
                 }
             }
         }
-        std::multimap<MessageIdType, MessageClient*> m_subscriptions;
+        std::multimap<MessageKey, MessageClient*> m_subscriptions;
         std::vector<MessageClient*> m_greedyClients;
 };
 
