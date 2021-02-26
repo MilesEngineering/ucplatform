@@ -5,4 +5,6 @@ LDFLAGS += -pthread
 # set architecture to find freertos port-specific files
 FREERTOS_PORT_DIR:=Linux
 
+
+FLAGS += -m32
 endif
