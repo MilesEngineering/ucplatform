@@ -7,11 +7,12 @@
 // auto-generated header files for messages to output debug info
 #include "Debug.h"
 
-#define POOL_SIZE    12
-#if defined(OUTPUT_DEBUG_STRINGS) || defined(USE_PRINTF_DIRECTLY)
-#define POOL_BUF_LEN (PrintfMessage::MSG_SIZE*offsetof(MessageBuffer, m_data))
-#else
-#define POOL_BUF_LEN (PrintfIDMessage::MSG_SIZE*offsetof(MessageBuffer, m_data))
+#define BUF_COUNT    12
+#if defined(ENABLE_DEBUG_MSG_STRINGS)
+#define BUF_PAYLOAD_SIZE (PrintfMessage::MSG_SIZE)
+const uint8_t DICTIONARY_ID[16] = {0};
+#elif defined(ENABLE_DEBUG_MSGS)
+#define BUF_PAYLOAD_SIZE (PrintfIDMessage::MSG_SIZE)
 const uint8_t DICTIONARY_ID[] = {FORMAT_STR_DICTIONARY_ID};
 #endif
 
@@ -41,7 +42,7 @@ static void SetStreamDebugThreshold(int streamID, int threshold)
 
 static MessagePool* DebugPool()
 {
-    static MessagePoolWithStorage<POOL_BUF_LEN, POOL_SIZE> debug_pool;
+    static MessagePoolWithStorage<BUF_PAYLOAD_SIZE, BUF_COUNT> debug_pool;
     return &debug_pool;
 }
 

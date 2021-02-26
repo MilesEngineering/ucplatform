@@ -87,36 +87,35 @@ void vLogStatement(PRIORITY_TYPE priority, int format_id, const char *fmt, int a
         return;
     }
 #endif
-#ifdef ENABLE_DEBUG_MSG_STRINGS
+#if defined(ENABLE_DEBUG_MSG_STRINGS)
     UNUSED(format_id);
-    MessageBuffer* buf = DebugServer::GetBuffer(PrintfIDMessage::MSG_SIZE);
-    if(buf == 0)
+    UNUSED(argc);
+    PrintfMessage msg;
+    if(!msg.Exists())
     {
         printf("!");
         vprintf(fmt, argp);
         return;
     }
-    PrintfMessage msg(buf);
-    if(msg.Exists())
+    else
     {
         msg.SetStreamID(stream_id);
         msg.SetPriority(priority);
         int dataLen = vsnprintf((char*)msg.Buffer(), msg.GetDataLength(), fmt, argp);
         msg.Buffer()[msg.GetDataLength()-1] = '\0';
         msg.SetDataLength(dataLen);
+        MessageBus::SendMessage(msg, 0);
     }
-#endif
-#ifdef ENABLE_DEBUG_MSGS
+#elif defined(ENABLE_DEBUG_MSGS)
     UNUSED(fmt);
-    MessageBuffer* buf = DebugServer::GetBuffer(PrintfMessage::MSG_SIZE);
-    if(buf == 0)
+    PrintfIDMessage msg;
+    if(!msg.Exists())
     {
         printf("!");
         vprintf(fmt, argp);
         return;
     }
-    PrintfIDMessage msg(buf);
-    if(msg.Exists())
+    else
     {
         msg.SetStreamID(stream_id);
         msg.SetPriority(priority);
