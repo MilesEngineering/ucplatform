@@ -132,7 +132,7 @@ MessagePool* MessageClient::GetMessagePool()
 }
 void MessageClient::DeliverMessage(Message& msg)
 {
-    m_rxMsgs.put(msg.m_buf);
+    m_rxMsgs.put(msg);
 }
 void MessageClient::PeriodicTask()
 {

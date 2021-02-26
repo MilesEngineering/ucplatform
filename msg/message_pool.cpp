@@ -20,7 +20,7 @@ MessagePool::MessagePool(uint8_t* buffer, int buffer_size, int buf_count)
         std::atomic_store(&msg->m_referenceCount, 1);
 #endif
         msg->m_owner = this;
-        msg->m_bufferSize = buffer_size - offsetof(MessageBuffer, m_data);
+        msg->m_bufferSize = buffer_size - MessagePool::BufferOverhead();
         Free(msg);
     }
 }
@@ -73,6 +73,19 @@ MessageBuffer* MessagePool::Allocate(int size)
     }
     return msg;
 }
+void MessagePool::FreeToOwner(MessageBuffer* mbuf)
+{
+    // Free back to whatever pool it came from.
+    if(mbuf && mbuf->m_owner)
+    {
+        mbuf->m_owner->Free(mbuf);
+    }
+    else
+    {
+        printf("ERROR Deallocating!\n");
+    }
+}
+
 void MessagePool::Free(MessageBuffer* msg)
 {
 #ifdef MSG_REFERENCE_COUNTING

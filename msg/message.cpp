@@ -108,6 +108,14 @@ Message::Message(const Message &rhs)
     }
 #endif
 }
+MessageBuffer* Message::TakeBuffer()
+{
+    MessageBuffer* ret = m_buf;
+    // set m_buf null, so deallocation doesn't free the buffer
+    m_buf = NULL;
+    // return the stored pointer to the new owner
+    return ret;
+}
 Message::~Message()
 {
     //# could add check for current time vs msg time set during allocation.
@@ -137,15 +145,7 @@ void Message::Deallocate()
 {
     if(m_buf != 0)
     {
-        // Free back to whatever pool it came from.
-        if(m_buf && m_buf->m_owner)
-        {
-            m_buf->m_owner->Free(m_buf);
-        }
-        else
-        {
-            printf("ERROR Deallocating!\n");
-        }
+        MessagePool::FreeToOwner(m_buf);
         m_buf = 0;
         m_data = 0;
     }
@@ -198,17 +198,9 @@ TimeType Message::GetTime() const
 {
     return m_buf->m_hdr.GetTime() * 1000.0;
 }
-uint8_t* Message::GetHeaderDataPointer() const
-{
-    return m_buf->m_hdr.m_data;
-}
 uint8_t* Message::GetDataPointer() const
 {
     return m_data;
-}
-int Message::GetTotalLength() const
-{
-    return sizeof(m_buf->m_hdr)+GetDataLength();
 }
 bool Message::Exists()
 {
