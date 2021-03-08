@@ -211,10 +211,9 @@ void CanClient::HandleReceivedMessage(Message& msg)
 }
 
 #define MCAN_RX_FIFO_NUMBER 0
-void CanClient::PeriodicTask()
+void CanClient::Woken()
 {
 #ifndef HANDLE_RX_IN_ISR
-    int rx_count = 0;
     while(1)
     {
         uint32_t status = mcan_rx_get_fifo_status(&mcan_instance, MCAN_RX_FIFO_NUMBER);
@@ -230,7 +229,6 @@ void CanClient::PeriodicTask()
             mcan_rx_fifo_acknowledge(&mcan_instance, MCAN_RX_FIFO_NUMBER, get_index);
 
             ProcessRxPacket(m_rx_packet);
-            rx_count++;
         }
         else
         {
@@ -239,13 +237,16 @@ void CanClient::PeriodicTask()
     }
     // reenable the interrupt, now that we've emptied the Rx FIFO
     mcan_enable_interrupt(&mcan_instance, MCAN_RX_FIFO_0_NEW_MESSAGE);
-    if(rx_count > 0)
-    {
-        printf("CANrx=%d rx_overflow=%d @ %" PRId32 "\n", rx_count, m_rx_overflow, xTaskGetTickCount());
-    }
-#else
-    printf("CAN rx_overflow=%d\n", m_rx_overflow);
 #endif
+}
+
+void CanClient::PeriodicTask()
+{
+#ifndef HANDLE_RX_IN_ISR
+    //# Extra polling, just in case we didn't get correctly woken up.
+    Woken();
+#endif
+    printf("CANrx=%d rx_overflow=%d @ %d\n", m_rx_count, m_rx_overflow, (int)xTaskGetTickCount());
 }
 
 bool CanClient::AddRxFilter(RxFilterType type, uint32_t filter_value_1, uint32_t filter_value_2=0)

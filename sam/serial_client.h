@@ -73,6 +73,7 @@ class UsbCdcClient : public SerialClient
         void PeriodicTask() override;
         bool m_connected = false;
     private:
+        void Woken() override;
         Usbhs* m_usb;
 };
 

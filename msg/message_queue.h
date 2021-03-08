@@ -14,7 +14,12 @@ class MessageQueue
         MessageBuffer* get(TickType_t waitTime=0);
         void put(MessageBuffer* msg);
         void put(Message& msg);
+        // call wake() to wake up someone pending on a message queue, without
+        // sending them valid data.
         void wake();
+        // The wake sentinel is a variable that we send the address of to wake
+        // someone waiting on a message.  
+        static const void* s_wakeSentinel;
     private:
         QueueHandle_t m_msgQueue;
 };

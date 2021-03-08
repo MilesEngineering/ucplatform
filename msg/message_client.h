@@ -32,6 +32,7 @@ class MessageClient
         int DebugThreshold() const;
         void SetDebugThreshold(int threshold);
         void Wake();
+        virtual void Woken();
 	protected:
         virtual void HandleReceivedMessage(Message& msg/*, MsgInfo* msgInfo*/) = 0;
 		virtual void PeriodicTask();

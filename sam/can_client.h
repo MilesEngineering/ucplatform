@@ -38,6 +38,7 @@ class CanClient : public MessageClient
         void ConfigureHardware();
         bool ProcessRxPacket(mcan_rx_element_fifo_0& packet);
         bool AddToTransmitFIFO(const Message& msg);
+        void Woken() override;
 
     private:
         Mcan* m_mcan_module;

@@ -57,7 +57,11 @@ void MessageClient::RunLoop()
         TickType_t wait_time = m_lastIdleTime + m_period - now;
         //printf("  waiting %ld (%ld + %d - %ld)\n", wait_time, m_lastIdleTime, m_period, now);
         MessageBuffer* msgbuf = m_rxMsgs.get(wait_time);
-        if(msgbuf)
+        if((uint32_t*)msgbuf == MessageQueue::s_wakeSentinel)
+        {
+            Woken();
+        }
+        else if(msgbuf)
         {
             m_msg_rx_count++;
             Message msg(msgbuf);
@@ -82,7 +86,7 @@ void MessageClient::RunLoop()
                 }
             }
             HandleReceivedMessage(msg);
-        }
+        } 
         else
         {
             m_lastIdleTime = GetTickCount();
@@ -151,6 +155,9 @@ int MessageClient::DebugThreshold() const
 void MessageClient::SetDebugThreshold(int threshold)
 {
     m_debugThreshold = threshold;
+}
+void MessageClient::Woken()
+{
 }
 void MessageClient::Wake()
 {

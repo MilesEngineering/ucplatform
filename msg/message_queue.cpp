@@ -1,5 +1,7 @@
 #include "message_queue.h"
 
+const void* MessageQueue::s_wakeSentinel = (void*)~0;
+
 MessageQueue::MessageQueue(int count)
 {
     m_msgQueue = xQueueCreate(count, sizeof(void*));
@@ -45,14 +47,13 @@ void MessageQueue::put(Message& msg)
 
 void MessageQueue::wake()
 {
-    uint32_t zero = 0;
     if(xPortIsInsideInterrupt())
     {
         BaseType_t xHigherPriorityTaskWoken = 1;
-        xQueueSendFromISR(m_msgQueue, &zero, &xHigherPriorityTaskWoken);
+        xQueueSendFromISR(m_msgQueue, &s_wakeSentinel, &xHigherPriorityTaskWoken);
     }
     else
     {
-        xQueueSend(m_msgQueue, &zero, 0);
+        xQueueSend(m_msgQueue, &s_wakeSentinel, 0);
     }
 }

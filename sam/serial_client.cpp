@@ -314,7 +314,7 @@ UsbCdcClient::UsbCdcClient(MessagePool& pool)
   m_usb(USBHS)
 {
 }
-void UsbCdcClient::PeriodicTask()
+void UsbCdcClient::Woken()
 {
     //# Note: Ubuntu Linux ModemManager will attempt to probe serial ports by
     //# AT commands which seem to consist of 7e 00 78 f0 7e 7e 00 78 f0 7e.
@@ -333,6 +333,12 @@ void UsbCdcClient::PeriodicTask()
         }
         //#printf("%d\n", bytes);
     }
+}
+
+void UsbCdcClient::PeriodicTask()
+{
+    //# Extra polling, just in case we didn't get correctly woken up.
+    Woken();
 }
 void UsbCdcClient::HandleReceivedMessage(Message& msg)
 {
