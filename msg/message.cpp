@@ -118,28 +118,31 @@ MessageBuffer* Message::TakeBuffer()
 }
 Message::~Message()
 {
-    //# could add check for current time vs msg time set during allocation.
-    //# that'd let us know if someone held on to a message longer than they
-    //# likely should've.  perhaps have a time threshold like "max_msg_hold_time",
-    //# and if more than that has elapsed, increment a stats counter in
-    //# MessageClient accessible via CurrentClient(), or figure something
-    //# else out for inside ISRs.  Probably most ISRs that Free messages
-    //# will be subclasses of MessageClient, so that might be the right
-    //# MessageClient to increment stats for.  How to get it from this
-    //# function or a static member of MessageClient like CurrentClient(), though?
-    //# We can of course keep one counter for *all* ISRs, separate from each client,
-    //# but that won't be very useful for diagnosing issues with ISRs holding
-    //# messages too long.
-    MessageClient* currentClient = MessageClient::CurrentClient();
-    if(currentClient)
+    if(m_buf != 0)
     {
-        currentClient->m_msgs_freed++;
-        if(GetTickCount() > GetTime() + STALE_MSG_TICK_THRESHOLD)
+        //# could add check for current time vs msg time set during allocation.
+        //# that'd let us know if someone held on to a message longer than they
+        //# likely should've.  perhaps have a time threshold like "max_msg_hold_time",
+        //# and if more than that has elapsed, increment a stats counter in
+        //# MessageClient accessible via CurrentClient(), or figure something
+        //# else out for inside ISRs.  Probably most ISRs that Free messages
+        //# will be subclasses of MessageClient, so that might be the right
+        //# MessageClient to increment stats for.  How to get it from this
+        //# function or a static member of MessageClient like CurrentClient(), though?
+        //# We can of course keep one counter for *all* ISRs, separate from each client,
+        //# but that won't be very useful for diagnosing issues with ISRs holding
+        //# messages too long.
+        MessageClient* currentClient = MessageClient::CurrentClient();
+        if(currentClient)
         {
-            currentClient->m_msgs_stale++;
+            currentClient->m_msgs_freed++;
+            if(GetTickCount() > GetTime() + STALE_MSG_TICK_THRESHOLD)
+            {
+                currentClient->m_msgs_stale++;
+            }
         }
+        Deallocate();
     }
-    Deallocate();
 }
 void Message::Deallocate()
 {
