@@ -7,7 +7,7 @@ INCLUDE_DIRS += \
 
 
 # we need the below include dirs for these files:
-SIMULINK_HEADER_FILES :=
+SIMULINK_HEADER_FILES := \
     /usr/local/MATLAB/R2020b/rtw/c/src/rt_logging.h                 \
     /usr/local/MATLAB/R2020b/rtw/c/src/rt_mxclassid.h               \
     /usr/local/MATLAB/R2020b/simulink/include/rtw_continuous.h      \
