@@ -27,6 +27,10 @@ include $(MK_DIR)/$(BUILD_SPEC).mk
 include $(MK_DIR)/msg.mk
 include $(MK_DIR)/freertos.mk
 
+ifneq ($(INCLUDE_SIMULINK_SUPPORT),)
+include $(MK_DIR)/simulink.mk
+endif
+
 TARGET := $(OBJ_DIR)/$(TARGET)
 PRINTF_DICTIONARY_H := $(OBJ_DIR)/printf_dictionary.h
 PRINTF_DICTIONARY_JSON := $(OBJ_DIR)/printf_dictionary.json
