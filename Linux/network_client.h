@@ -64,12 +64,12 @@ class NetworkClient : public MessageClient
                 return false;
             }
             {
-                ConnectMessage cm;
+                Network_ConnectMessage cm;
                 cm.CopyInName((const uint8_t*)"FreeRTOS", strlen("FreeRTOS"));
                 SendSocketMsg(cm);
             }
             {
-                MaskedSubscriptionMessage subscribeMsg;
+                Network_MaskedSubscriptionMessage subscribeMsg;
                 SendSocketMsg(subscribeMsg);
             }
             return true;

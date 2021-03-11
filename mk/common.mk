@@ -47,7 +47,7 @@ CC := ${PREFIX}gcc
 CXX := ${PREFIX}g++
 GDB := ${PREFIX}gdb
 
-INCLUDE_DIRS += -I$(UCPLATFORM) -I$(UCPLATFORM)/$(BUILD_SPEC)/include
+INCLUDE_DIRS += -I$(UCPLATFORM)/../common -I$(UCPLATFORM) -I$(UCPLATFORM)/$(BUILD_SPEC)/include
 
 # for auto-generated $(PRINTF_DICTIONARY_H)
 INCLUDE_DIRS += -I$(OBJ_DIR)

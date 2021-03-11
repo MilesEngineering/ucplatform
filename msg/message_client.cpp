@@ -2,7 +2,7 @@
 #include "message_bus.h"
 #include "tick.h"
 #include <string.h>
-#include "Debug.h"
+#include "msg_aliases.h"
 
 extern "C" void client_callback( void* pvParameters );
 

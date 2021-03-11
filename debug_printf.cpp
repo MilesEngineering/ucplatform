@@ -5,7 +5,7 @@
 #include <string.h>
 
 // auto-generated header files for messages to output debug info
-#include "Debug.h"
+#include "msg_aliases.h"
 
 #ifdef ENABLE_DEBUG_MSG_STRINGS
 #define PRIORITY_TYPE PrintfMessage::Priorities

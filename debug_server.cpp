@@ -5,7 +5,7 @@
 #include <string.h>
 
 // auto-generated header files for messages to output debug info
-#include "Debug.h"
+#include "msg_aliases.h"
 
 #define BUF_COUNT    12
 #if defined(ENABLE_DEBUG_MSG_STRINGS)
